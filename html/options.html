@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-CN">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1">
+		<title>图片管理 · 豆包无水印下载助手</title>
+		<link rel="stylesheet" href="../css/options.css">
+	</head>
+	<body>
+		<div class="container">
+			<header class="header">
+				<div class="header-left">
+					<div class="logo"><img src="../icons/logo.ico" alt="Logo"></div>
+					<div class="header-text">
+						<h1>豆包图片管理</h1>
+						<p class="subtitle" id="image-count">已捕获 0 张图片</p>
+					</div>
+				</div><button class="feedback-btn" id="feedback-btn" title="问题反馈"><svg
+						xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+						stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round"
+							d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z" />
+					</svg></button>
+			</header>
+			<div class="toolbar" id="toolbar"><label class="select-all-wrapper"><input type="checkbox" id="select-all">
+					<span class="checkmark"></span> <span class="label-text">全选</span></label>
+				<div class="toolbar-right"><span class="count-info" id="count-info">已选 0 张</span> <button
+						id="download-btn" class="download-btn" disabled="disabled"><svg
+							xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+							stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round"
+								d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+						</svg> <span class="btn-text">批量下载</span></button></div>
+			</div>
+			<div class="image-list" id="image-list"></div>
+			<div class="empty-state" id="empty-state" style="display: none">
+				<div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+						stroke-width="1.5" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round"
+							d="M2.25 13.5h3.86a2.25 2.25 0 0 1 2.012 1.244l.256.512a2.25 2.25 0 0 0 2.013 1.244h3.218a2.25 2.25 0 0 0 2.013-1.244l.256-.512a2.25 2.25 0 0 1 2.013-1.244h3.859m-19.5.338V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18v-4.162c0-.224-.034-.447-.1-.661L19.24 5.338a2.25 2.25 0 0 0-2.15-1.588H6.911a2.25 2.25 0 0 0-2.15 1.588L2.35 13.177a2.25 2.25 0 0 0-.1.661Z" />
+					</svg></div>
+				<h3>暂无可下载的图片</h3>
+				<p>请先在 doubao.com 生成图片后再打开面板</p>
+			</div>
+			<div class="loading-state" id="loading-state">
+				<div class="spinner"></div>
+				<p>正在获取图片...</p>
+			</div>
+			<footer class="footer"><a href="https://www.solitude.top" target="_blank" class="footer-link">定弦 Lab</a>
+				<span class="footer-sep">·</span> <span class="footer-version">v1.0</span> <span
+					class="footer-sep">·</span> <a href="https://github.com/Jem-Geshibao" target="_blank"
+					class="footer-link">bread</a></footer>
+		</div>
+		<script src="../js/jszip.min.js"></script>
+		<script src="../js/options.js"></script>
+	</body>
+</html>
