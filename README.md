@@ -61,7 +61,7 @@
 
 ## 🛠 开发者信息 & 联系
 
-- 作者：Jem Geshibao（仓库主页：https://github.com/Jem-Geshibao
+- 作者：Jem Geshibao 仓库主页：https://github.com/Jem-Geshibao
 - 如需反馈或贡献，请在仓库提交 issue 或 PR。
 
 ## 📜 许可
