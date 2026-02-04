@@ -61,7 +61,7 @@ Host permissions:
 
 ## 🛠 Developer & Contact
 
-- Author: Jem Geshibao (repository homepage: https://github.com/yinhw0210)
+- Author: Jem Geshibao repository homepage: https://github.com/Jem-Geshibao
 - For bug reports or contributions, please open an issue or submit a pull request on GitHub.
 
 ## 📜 License
