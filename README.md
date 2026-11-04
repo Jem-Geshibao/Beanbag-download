@@ -93,6 +93,7 @@ Beanbag-download/
 │   ├── options.css         # 面板与关于页样式（含 CSS 变量、350px 弹窗宽度、500px 高度）
 │   └── style.css           # 注入 doubao.com 的下载按钮样式
 ├── LICENSE                 # MIT 许可证
+├── CHANGELOG.md            # 版本更新记录
 ├── README.md               # 中文说明（本文件）
 └── README_EN.md            # English README
 ```
@@ -112,7 +113,7 @@ Beanbag-download/
 
 ### 方式一：加载已解压的扩展（推荐）
 
-适用于自己使用、开发调试。
+适用于自己使用、开发调试。不想用 git 的话，可直接从 [Releases](https://github.com/Jem-Geshibao/Beanbag-download/releases) 下载 `Beanbag-download-v1.1.0.zip`，解压后按下面的步骤加载。
 
 1. 获取代码：
 
@@ -261,6 +262,8 @@ Beanbag-download/
 ## 版本
 
 当前版本 **v1.1.0**（见 `manifest.json` 的 `version` 字段）。修改版本号后需在扩展页重新加载才能生效。
+
+完整变更记录见 [CHANGELOG.md](CHANGELOG.md)；历史版本安装包见 [Releases](https://github.com/Jem-Geshibao/Beanbag-download/releases)。
 
 ## 联系作者
 

@@ -95,6 +95,7 @@ Beanbag-download/
 │   ├── options.css         # Panel & about page styles (350px wide, 500px tall popup)
 │   └── style.css           # Styles for the button injected into doubao.com
 ├── LICENSE                 # MIT license
+├── CHANGELOG.md            # Release history
 ├── README.md               # 中文说明
 └── README_EN.md            # English README (this file)
 ```
@@ -113,6 +114,8 @@ Manifest entry points:
 ## Installation
 
 ### Option A — Load unpacked (recommended)
+
+Prefer no git? Download `Beanbag-download-v1.1.0.zip` from [Releases](https://github.com/Jem-Geshibao/Beanbag-download/releases), unzip, then follow the steps below.
 
 1. Get the code:
 
@@ -236,6 +239,8 @@ Click the refresh ↻ icon on the extension card at `chrome://extensions/`, relo
 ## Version
 
 Current version **v1.1.0** (see `version` in `manifest.json`). Reload the extension after changing it.
+
+See [CHANGELOG.md](CHANGELOG.md) for the full history and [Releases](https://github.com/Jem-Geshibao/Beanbag-download/releases) for downloadable packages.
 
 ## Contact
 
