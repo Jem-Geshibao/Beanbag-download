@@ -38,7 +38,7 @@ A Chromium extension (Chrome / Edge / other Chromium-based browsers) that automa
 | Feature | Details |
 | --- | --- |
 | Automatic URL capture | Intercepts page ↔ server traffic and extracts `image_ori_raw` URLs, filtering out scaled or watermarked variants (`watermark`, `pre_watermark`, `downsize`, `image_pre`) |
-| In-page single download | Injects a "下载无水印原图" button at the top-right of the image preview, with downloading / success / failure states |
+| In-page single download | The green "下载无水印原图" button auto-anchors to the top-right of the generated image currently being viewed — legacy preview layer, the new Doubao canvas, or large inline images all work; with downloading / success / failure states |
 | Management panel | Click the toolbar icon to open a 350×500 panel listing images captured from **all open doubao.com tabs** |
 | Batch download | Select individually or select-all, then click "批量下载" to fetch each image and package them into a ZIP |
 | Per-item download | Every row has its own download button — no selection needed |
@@ -59,7 +59,7 @@ doubao.com page (MAIN world)
 content.js (ISOLATED world, injected at document_start)
   window.doubaoImageMap: imageId → original URL
         │  imageId = the 32-hex segment of rc_gen_image/<id>, used for de-duplication
-        │  injects the download button into #img-content-container
+        │  floats a fixed download button at the top-right of the current image
         ▼
 chrome.runtime.sendMessage({ action: "download" })
         ▼
@@ -69,7 +69,7 @@ background.js (Service Worker)
 
 Key details:
 
-- **Resolving the current image**: reads `#img-content-container img[data-testid="in_painting_picture"]`, falls back to `#thumb-list img[class*="active"]`, parses the imageId from `src`, then looks up the original URL in the Map.
+- **Resolving the current image**: tries the legacy selectors first (`#img-content-container img[data-testid="in_painting_picture"]`, `#thumb-list img[class*="active"]`); when absent (e.g. Doubao's 2026-11 canvas redesign), it falls back to scanning for the largest visible generated image (`src` contains `rc_gen_image`, rendered ≥ 260px). The imageId is parsed from `src` and looked up in the Map.
 - **Aggregating the list**: the panel sends `getImageList`; the background script runs `chrome.tabs.query` for `*://*.doubao.com/*`, sends `getImageMap` to each content script, and merges results de-duplicated by imageId.
 - **ZIP packaging**: the panel fetches each blob with `fetch(url, { mode: "cors", credentials: "omit" })` and adds it to JSZip, so it depends on the image host allowing cross-origin reads (see [Known Limitations](#known-limitations)).
 
@@ -95,7 +95,6 @@ Beanbag-download/
 │   ├── options.css         # Panel & about page styles (350px wide, 500px tall popup)
 │   └── style.css           # Styles for the button injected into doubao.com
 ├── LICENSE                 # MIT license
-├── CHANGELOG.md            # Release history
 ├── README.md               # 中文说明
 └── README_EN.md            # English README (this file)
 ```
@@ -115,7 +114,7 @@ Manifest entry points:
 
 ### Option A — Load unpacked (recommended)
 
-Prefer no git? Download `Beanbag-download-v1.1.0.zip` from [Releases](https://github.com/Jem-Geshibao/Beanbag-download/releases), unzip, then follow the steps below.
+Prefer no git? Download the latest `Beanbag-download-v*.zip` from [Releases](https://github.com/Jem-Geshibao/Beanbag-download/releases), unzip, then follow the steps below.
 
 1. Get the code:
 
@@ -146,10 +145,12 @@ Open `https://www.doubao.com/` and use the image generation feature as usual. Th
 
 ### 2. Single download (in page)
 
-Open an image preview. A green **「下载无水印原图」** button appears at the top-right of the image area:
+Open a generated image (preview, canvas, or a large inline image). A green **「下载无水印原图」** button appears at its top-right:
 
+- The button is floating and re-anchors to the image being viewed; canvas zoom/pan and page scrolling are tracked automatically.
 - Click → "下载中..." → "下载成功!" (resets after 2 seconds).
-- "未找到原图" means the URL wasn't captured; switch to another thumbnail and back to re-trigger parsing, or use the panel instead.
+- "未找到原图" means the URL wasn't captured; switch to another image and back to re-trigger parsing, or use the panel instead.
+- Both the legacy preview layer and the new Doubao canvas are supported; see [How It Works](#how-it-works).
 
 File name: `doubao_<imageId>.png` (timestamp is used when no imageId is available).
 
@@ -183,8 +184,8 @@ The extension does **not** request `storage`, `cookies` or `webRequest`. Capture
 **Q1: The panel says "暂无可下载的图片".**
 Make sure you have generated images on `doubao.com` in this browser, the tab is still open (the panel only reads open tabs), then reopen the panel.
 
-**Q2: No green button on the image preview.**
-Confirm you're in the image preview view — the button is injected into `#img-content-container`. If the container renders late, a `MutationObserver` adds the button as soon as it appears. Check DevTools Console for errors.
+**Q2: No green button on the image.**
+The button only anchors to generated images rendered at **≥ 260×260px**: the legacy preview layer works directly; in the new canvas make sure the image is large enough in the viewport; small inline thumbnails won't trigger it — open the image instead. Wait 1–2s if the page just loaded; a `MutationObserver` plus a 500ms reposition loop attaches the button once the image appears. Check DevTools Console for errors.
 
 **Q3: Clicking the button shows "未找到原图".**
 The URL didn't match the capture rules — often because the image was generated in an earlier session and no request is made now, or the response was streamed in fragments. Re-open the image to trigger a request, or check the panel.
@@ -230,17 +231,17 @@ Click the refresh ↻ icon on the extension card at `chrome://extensions/`, relo
 
 | File | Depends on |
 | --- | --- |
-| `js/content.js` `getCurrentPreviewImageId()` | `#img-content-container img[data-testid="in_painting_picture"]`, `#thumb-list img[class*="active"]` |
-| `js/content.js` `tryAddButton()` | `#img-content-container` |
+| `js/content.js` `getLegacyPreviewImage()` | Legacy selectors `#img-content-container img[data-testid="in_painting_picture"]`, `#thumb-list img[class*="active"]` (priority path with automatic fallback) |
+| `js/content.js` `findLargestPreviewImage()` | `src` containing `rc_gen_image` with rendered size ≥ 260px; tune the threshold to the canvas render size |
 | `js/content.js` `extractImageId()` | `rc_gen_image/<32 hex chars>` |
 | `js/background.js` `injectPageInterceptor()` | `image_ori_raw`, `rc_gen_image`, exclusions `watermark` / `pre_watermark` / `downsize` / `image_pre` |
 | `js/background.js` injection rule | Path keywords `/samantha/`, `/alice/`, `/chat/`, `/completion`, `/api/`, `/v1/` |
 
 ## Version
 
-Current version **v1.1.0** (see `version` in `manifest.json`). Reload the extension after changing it.
+Current version **v1.1.1** (see `version` in `manifest.json`). Reload the extension after changing it.
 
-See [CHANGELOG.md](CHANGELOG.md) for the full history and [Releases](https://github.com/Jem-Geshibao/Beanbag-download/releases) for downloadable packages.
+See [Releases](https://github.com/Jem-Geshibao/Beanbag-download/releases) for version history and downloadable packages.
 
 ## Contact
 

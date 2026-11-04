@@ -1,8 +1,7 @@
 #doubao-download-btn {
-	position: absolute;
-	top: 20px;
-	right: 20px;
-	z-index: 9999;
+	/* 定位由 content.js 内联样式动态控制（fixed，跟随当前生成图右上角） */
+	position: fixed;
+	z-index: 999999;
 	padding: 10px 20px;
 	background-color: #2ecc71;
 	color: #fff;

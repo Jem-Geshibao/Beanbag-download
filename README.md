@@ -36,7 +36,7 @@
 | 功能 | 说明 |
 | --- | --- |
 | 自动抓取原图 | 拦截页面与豆包服务端的通信，从响应体中提取 `image_ori_raw` 的无水印地址，自动过滤带 `watermark` / `pre_watermark` / `downsize` / `image_pre` 的缩放或水印版本 |
-| 页面内单张下载 | 在图片预览区右上角注入「下载无水印原图」按钮，点击即存，按钮有"下载中 / 成功 / 失败"状态反馈 |
+| 页面内单张下载 | 绿色「下载无水印原图」按钮自动锚定在当前查看的生成图右上角——旧版预览图层、新版自绘画布、聊天流中的大图均支持；按钮有"下载中 / 成功 / 失败"状态反馈 |
 | 管理面板 | 点击扩展图标打开面板（350×500），以缩略图列表汇总**当前所有已打开的 doubao.com 标签页**捕获到的图片 |
 | 批量下载 | 面板内可单选 / 全选，勾选后点「批量下载」逐张拉取并打包为 ZIP |
 | 逐张下载 | 列表每项右侧有独立下载按钮，不必勾选 |
@@ -57,7 +57,7 @@ doubao.com 页面（MAIN world）
 content.js（ISOLATED world，document_start 注入）
   window.doubaoImageMap: imageId → 原图 URL
         │  从 URL 中匹配 rc_gen_image/<32位十六进制> 作为 imageId 去重
-        │  在 #img-content-container 内注入下载按钮
+        │  在当前生成图右上角悬浮固定下载按钮（fixed 定位，自适应锚定）
         ▼
 chrome.runtime.sendMessage({ action: "download" })
         ▼
@@ -67,7 +67,7 @@ background.js（Service Worker）
 
 几个关键细节：
 
-- **当前图片的判定**：先取 `#img-content-container img[data-testid="in_painting_picture"]`，回退到 `#thumb-list img[class*="active"]`，再从 `src` 中解析 imageId 去 Map 里查原图地址。
+- **当前图片的判定**：先走旧版选择器（`#img-content-container img[data-testid="in_painting_picture"]`、`#thumb-list img[class*="active"]`）；都不存在时（如豆包 2026-11 改版后的自绘画布），回退为扫描页面中最大可见生成图（`src` 含 `rc_gen_image`、显示尺寸 ≥ 260px）。定位到图后从 `src` 解析 imageId 去 Map 里查原图地址。
 - **批量列表的聚合**：面板请求 `getImageList`，后台 `chrome.tabs.query` 匹配 `*://*.doubao.com/*`，向每个标签页的内容脚本发 `getImageMap`，最后按 imageId 去重合并。
 - **ZIP 打包**：面板用 `fetch(url, { mode: "cors", credentials: "omit" })` 取 blob 写入 JSZip，因此依赖原图服务器允许跨域读取（见[已知限制](#已知限制)）。
 
@@ -93,7 +93,6 @@ Beanbag-download/
 │   ├── options.css         # 面板与关于页样式（含 CSS 变量、350px 弹窗宽度、500px 高度）
 │   └── style.css           # 注入 doubao.com 的下载按钮样式
 ├── LICENSE                 # MIT 许可证
-├── CHANGELOG.md            # 版本更新记录
 ├── README.md               # 中文说明（本文件）
 └── README_EN.md            # English README
 ```
@@ -113,7 +112,7 @@ Beanbag-download/
 
 ### 方式一：加载已解压的扩展（推荐）
 
-适用于自己使用、开发调试。不想用 git 的话，可直接从 [Releases](https://github.com/Jem-Geshibao/Beanbag-download/releases) 下载 `Beanbag-download-v1.1.0.zip`，解压后按下面的步骤加载。
+适用于自己使用、开发调试。不想用 git 的话，可直接从 [Releases](https://github.com/Jem-Geshibao/Beanbag-download/releases) 下载最新版 `Beanbag-download-v*.zip`，解压后按下面的步骤加载。
 
 1. 获取代码：
 
@@ -151,10 +150,12 @@ Beanbag-download/
 
 ### 第二步：单张下载（页面内）
 
-进入图片预览（大图 / 缩略图列表）视图后，图片区域右上角会出现绿色按钮 **「下载无水印原图」**：
+点击查看一张生成图（放大预览、画布、或聊天流中渲染得足够大的图），图片右上角会出现绿色按钮 **「下载无水印原图」**：
 
+- 按钮是悬浮定位的，会自动跟随当前查看的图；画布内缩放 / 平移、页面滚动都会重新对位。
 - 点击 → 按钮变为「下载中...」→ 成功后显示「下载成功!」（2 秒后恢复）。
-- 若显示「未找到原图」，说明该图未命中拦截规则，可先把图片切换一次（点击其他缩略图再切回）触发重新解析，或改用面板批量下载。
+- 若显示「未找到原图」，说明该图未命中拦截规则，可先把图片切换一次（点其他图再切回）触发重新解析，或改用面板批量下载。
+- 旧版预览图层与新版自绘画布都支持；判定规则见[工作原理](#工作原理)。
 
 下载文件名规则：`doubao_<imageId>.png`（拿不到 imageId 时用时间戳）。
 
@@ -197,10 +198,10 @@ Beanbag-download/
 3. 生成图片后是否刷新过页面（刷新会清空内存中的映射，但重新加载图片后会自动重建）；
 4. 重新打开面板再试。
 
-**Q2：图片预览角落没有出现绿色按钮？**
+**Q2：图片上没有出现绿色按钮？**
 
-- 确认当前处于图片预览视图；按钮只注入到 `#img-content-container` 容器内。
-- 页面刚打开时容器可能还没渲染，稍等或切换一次图片；内容脚本用 `MutationObserver` 监听 DOM 变化，容器出现后会自动补上按钮。
+- 按钮只锚定在**显示尺寸 ≥ 260×260px** 的生成图上：旧版预览图层直接支持；新版画布里请确保图片主体在可视区域内且足够大；聊天流缩略图过小不会触发，点开大图即可。
+- 页面刚打开时图片可能还没加载完成，稍等 1–2 秒；内容脚本用 `MutationObserver` + 500ms 周期重定位，图片出现后会自动补上按钮。
 - 打开 DevTools Console 看有无脚本报错。
 
 **Q3：点了按钮提示「未找到原图」？**
@@ -227,7 +228,7 @@ Beanbag-download/
 ## 已知限制
 
 - 仅在 `doubao.com` 域下工作，且只识别 URL 中含 `rc_gen_image` 的生成图，头像、表情、上传素材等不会被捕获。
-- 拦截依赖豆包前端的响应结构（`image_ori_raw` 字段）与页面选择器（`#img-content-container`、`#thumb-list` 等），官方改版后可能需要同步更新（见下节表格）。
+- 拦截依赖豆包前端的响应结构（`image_ori_raw` 字段）；按钮锚定已改为自适应（旧选择器优先 + 最大可见生成图回退，v1.1.1 起），对 DOM 改版的耐受度更高，但若生成图的 `src` 不再含 `rc_gen_image` 或响应字段变更，仍需同步更新（见下节表格）。
 - 捕获数据不持久化，关闭标签页或刷新页面后需重新抓取。
 - 批量打包受 CORS 与原图链接时效影响。
 
@@ -253,17 +254,17 @@ Beanbag-download/
 
 | 文件 | 依赖的页面结构 / 规则 |
 | --- | --- |
-| `js/content.js` `getCurrentPreviewImageId()` | `#img-content-container img[data-testid="in_painting_picture"]`、`#thumb-list img[class*="active"]` |
-| `js/content.js` `tryAddButton()` | `#img-content-container` |
+| `js/content.js` `getLegacyPreviewImage()` | 旧版选择器 `#img-content-container img[data-testid="in_painting_picture"]`、`#thumb-list img[class*="active"]`（仅作优先路径，失效自动回退，不影响可用性） |
+| `js/content.js` `findLargestPreviewImage()` | 生成图 `src` 含 `rc_gen_image` 且显示尺寸 ≥ 260px；尺寸阈值可按画布实际渲染大小调整 |
 | `js/content.js` `extractImageId()` | `rc_gen_image/<32 位十六进制>` |
 | `js/background.js` `injectPageInterceptor()` | 响应字段 `image_ori_raw`、URL 关键字 `rc_gen_image`、排除关键字 `watermark` / `pre_watermark` / `downsize` / `image_pre` |
 | `js/background.js` 注入判断 | 请求路径关键字 `/samantha/`、`/alice/`、`/chat/`、`/completion`、`/api/`、`/v1/` |
 
 ## 版本
 
-当前版本 **v1.1.0**（见 `manifest.json` 的 `version` 字段）。修改版本号后需在扩展页重新加载才能生效。
+当前版本 **v1.1.1**（见 `manifest.json` 的 `version` 字段）。修改版本号后需在扩展页重新加载才能生效。
 
-完整变更记录见 [CHANGELOG.md](CHANGELOG.md)；历史版本安装包见 [Releases](https://github.com/Jem-Geshibao/Beanbag-download/releases)。
+历史版本与变更说明见 [Releases](https://github.com/Jem-Geshibao/Beanbag-download/releases)。
 
 ## 联系作者
 
