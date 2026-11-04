@@ -146,7 +146,7 @@ feedbackBtn && feedbackBtn.addEventListener("click", () => {
 	const e = document.querySelectorAll(".footer-link");
 	let t = null;
 	if (e.forEach(e => {
-			e.href && e.href.includes("github.com/yinhw0210") && (t = e)
+			e.href && e.href.includes("github.com/Jem-Geshibao") && (t = e)
 		}), t) {
 		t.scrollIntoView({
 				behavior: "smooth",
